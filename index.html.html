@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Islamic Studies Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light background */
+            color: #334155; /* Darker text for contrast */
+            display: flex;
+            justify-content.center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .quiz-container {
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 700px;
+            box-sizing: border-box;
+        }
+        .question-card {
+            background-color: #f8fafc;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        .option-label {
+            display: block;
+            background-color: #e2e8f0;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        .option-label:hover {
+            background-color: #cbd5e1;
+            transform: translateY(-2px);
+        }
+        .option-label input[type="radio"] {
+            margin-right: 10px;
+        }
+        .option-label.selected {
+            background-color: #93c5fd; /* Light blue for selected */
+            color: #1e3a8a; /* Dark blue text */
+            font-weight: 600;
+        }
+        .option-label.correct {
+            background-color: #a7f3d0; /* Light green for correct */
+            color: #065f46;
+            font-weight: 600;
+        }
+        .option-label.incorrect {
+            background-color: #fecaca; /* Light red for incorrect */
+            color: #991b1b;
+            font-weight: 600;
+        }
+        .button {
+            background-color: #3b82f6; /* Blue */
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        .button:hover {
+            background-color: #2563eb;
+            transform: translateY(-2px);
+        }
+        .button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+        .result-section {
+            text-align: center;
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f0f9ff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        .hidden {
+            display: none;
+        }
+        input[type="text"],
+        input[type="password"] {
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+        }
+        .error-message {
+            color: #ef4444; /* Red color for error messages */
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .quiz-container {
+                padding: 20px;
+            }
+            .option-label {
+                padding: 10px;
+            }
+            .button {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div id="quizApp" class="quiz-container">
+        <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">Islamic Studies Quiz</h1>
+
+        <!-- Login Screen -->
+        <div id="loginScreen" class="text-center">
+            <p class="mb-4 text-gray-600">Please enter your credentials to start the quiz.</p>
+            <input type="text" id="quizId" placeholder="Enter Quiz ID" class="mb-4">
+            <input type="password" id="quizPassword" placeholder="Enter Password" class="mb-4">
+            <p id="loginError" class="error-message hidden">Invalid ID or Password. Please try again.</p>
+            <button id="loginButton" class="button">Login</button>
+        </div>
+
+        <!-- Start Screen (after successful login) -->
+        <div id="startScreen" class="text-center hidden">
+            <p class="mb-4 text-gray-600">Welcome! Please enter your name to begin.</p>
+            <input type="text" id="candidateName" placeholder="Enter your name" class="mb-4">
+            <button id="startButton" class="button">Start Quiz</button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quizScreen" class="hidden">
+            <div id="questionsContainer">
+                <!-- Questions will be dynamically loaded here -->
+            </div>
+            <div class="flex justify-between mt-6">
+                <button id="prevButton" class="button hidden">Previous</button>
+                <button id="nextButton" class="button ml-auto">Next</button>
+                <button id="submitButton" class="button hidden">Submit Quiz</button>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="resultScreen" class="result-section hidden">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">Quiz Results</h2>
+            <p class="text-lg mb-2"><span class="font-semibold" id="finalCandidateName"></span>, your score is:</p>
+            <p class="text-4xl font-extrabold text-blue-600 mb-4"><span id="score"></span> / <span id="totalQuestions"></span></p>
+            <div id="feedbackContainer" class="text-left mt-6">
+                <!-- Feedback for each question will be shown here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Quiz data based on the uploaded document
+        const quizData = [
+            {
+                question: "کس صحابی نے سب سے زیادہ احادیث روایت کی ہیں؟",
+                options: ["حضرت علی", "حضرت ابو ہریرہ", "حضرت عثمان", "حضرت عمر"],
+                answer: "حضرت ابو ہریرہ"
+            },
+            {
+                question: "نماز خسوف کس موقع پر ادا کی جاتی ہے؟",
+                options: ["سورج گرہن", "چاند گرہن", "بارش", "زلزلہ"],
+                answer: "چاند گرہن"
+            },
+            {
+                question: "جمعہ کی نماز کیا ہے؟",
+                options: ["سنت", "نفل", "فرض", "واجب"],
+                answer: "فرض"
+            },
+            {
+                question: "نماز کے دوران درود پڑھنا کیا ہے؟",
+                options: ["فرض", "واجب", "سنت", "مستحب"],
+                answer: "سنت"
+            },
+            {
+                question: "بارش کے موقع پر کون سی نماز ادا کی جاتی ہے؟",
+                options: ["نماز استسقاء", "نماز کسوف", "نماز خسوف", "نماز تہجد"],
+                answer: "نماز استسقاء"
+            },
+            {
+                question: "سفر کے دوران نماز مختصر کر کے پڑھنے کو کیا کہتے ہیں؟",
+                options: ["قصر", "جمع", "وتر", "اشراق"],
+                answer: "قصر"
+            },
+            {
+                question: "نماز جنازہ میں کتنی تکبیرات ہیں؟",
+                options: ["تین", "چار", "پانچ", "چھ"],
+                answer: "چار"
+            },
+            {
+                question: "آپؐ نے جو پہلی مسجد بنائی اس کا نام کیا ہے؟",
+                options: ["مسجد نبوی", "مسجد قبا", "مسجد حرام", "مسجد اقصی"],
+                answer: "مسجد قuba"
+            },
+            {
+                question: "نماز تراویح کس موقع پر آتی ہے؟",
+                options: ["عید الفطر", "رمضان", "عید الاضحیٰ", "شب معراج"],
+                answer: "رمضان"
+            },
+            {
+                question: "قرآن کی کس سورت میں آیا ہے کہ جب جہنمی لوگوں سے جہنم میں ہونے کی وجہ پوچھی جائے گی تو وہ کہیں گے کہ ہم نماز نہیں پڑھتے تھے؟",
+                options: ["سورہ بقرہ", "سورہ مدثر", "سورہ فاتحہ", "سورہ یٰسین"],
+                answer: "سورہ مدثر"
+            },
+            {
+                question: "پہلا جمعہ پہلی ہجری میں پڑھا گیا یا دوسری ہجری میں؟",
+                options: ["پہلی ہجری", "دوسری ہجری", "تیسری ہجری", "چوتھی ہجری"],
+                answer: "پہلی ہجری"
+            },
+            {
+                question: "پہلی عید کی نماز آپؐ نے کس ہجری میں پڑھی؟",
+                options: ["پہلی ہجری", "دوسری ہجری", "تیسری ہجری", "چوتھی ہجری"],
+                answer: "دوسری ہجری"
+            },
+            {
+                question: "کس نماز کے پڑھنے کا ثواب حج اور جمعہ پڑھنے کے برابر ہوتا ہے؟",
+                options: ["نماز تہجد", "نماز اشراق", "نماز چاشت", "نماز اوابین"],
+                answer: "نماز اشراق"
+            },
+            {
+                question: "نماز کب فرض ہوئی؟",
+                options: ["9 نبوی", "10 نبوی", "11 نبوی", "12 نبوی"],
+                answer: "10 نبوی"
+            },
+            {
+                question: "وہ نماز جو صبح سورج کے نکلنے تک پڑھی جاتی ہے؟",
+                options: ["نماز فجر", "نماز تہجد", "نماز اشراق", "نماز چاشت"],
+                answer: "نماز تہجد"
+            },
+            {
+                question: "مغرب اور عشاء کے درمیان کون سی نفل نماز پڑھی جاتی ہے؟",
+                options: ["نماز اوابین", "نماز اشراق", "نماز تہجد", "نماز چاشت"],
+                answer: "نماز اوابین"
+            },
+            {
+                question: "دعائے قنوت کس نماز میں پڑھی جاتی ہے؟",
+                options: ["نماز فجر", "نماز وتر", "نماز عشاء", "نماز مغرب"],
+                answer: "نماز وتر"
+            },
+            {
+                question: "اذان میں کتنی تکلیمات ہوتی ہیں؟",
+                options: ["4", "5", "6", "7"],
+                answer: "6"
+            },
+            {
+                question: "رکوع کے بعد سیدھا کھڑا ہونا کیا کہلاتا ہے؟",
+                options: ["سجدہ", "قومہ", "جلسہ", "تشہد"],
+                answer: "قومہ"
+            },
+            {
+                question: "کون سی ایسی نماز ہے جس میں کوئی آیت تلاوت نہیں کی جاتی؟",
+                options: ["نماز فجر", "نماز جنازہ", "نماز عید", "نماز وتر"],
+                answer: "نماز جنازہ"
+            },
+            {
+                question: "وضو کے احکامات کس سورت میں آئے ہیں؟",
+                options: ["سورہ بقرہ", "سورہ آل عمران", "سورہ المائدہ", "سورہ نساء"],
+                answer: "سورہ المائدہ"
+            },
+            {
+                question: "جمعہ میں دوسری اذان کس کے دور میں شروع ہوئی؟",
+                options: ["حضرت ابوبکر صدیق", "حضرت عمر فاروق", "حضرت عثمان غنی", "حضرت علی"],
+                answer: "حضرت عثمان غنی"
+            },
+            {
+                question: "عید کی نماز میں کتنی اضافی تکبیرات ہوتی ہیں؟",
+                options: ["3", "4", "5", "6"],
+                answer: "6"
+            },
+            {
+                question: "نماز جنازہ کیا ہے؟",
+                options: ["سنت", "واجب", "فرض کفایہ", "مستحب"],
+                answer: "فرض کفایہ"
+            },
+            {
+                question: "وضو کے بعد کون سا کلمہ پڑھا جاتا ہے؟",
+                options: ["پہلا کلمہ", "دوسرا کلمہ", "تیسرا کلمہ", "چوتھا کلمہ"],
+                answer: "دوسرا کلمہ"
+            },
+            {
+                question: "عید کی نماز کیا ہے؟",
+                options: ["فرض", "سنت", "واجب", "نفل"],
+                answer: "واجب"
+            },
+            {
+                question: "دو سجدوں کی درمیانی حالت کو کیا کہتے ہیں؟",
+                options: ["قومہ", "جلسہ", "تشہد", "سجدہ سہو"],
+                answer: "جلسہ"
+            },
+            {
+                question: "فرائض نکات کی تعداد کتنی ہے؟",
+                options: ["15", "16", "17", "18"],
+                answer: "17"
+            },
+            {
+                question: "زکوٰۃ کب فرض ہوئی ہے؟",
+                options: ["1 ہجری", "2 ہجری", "3 ہجری", "4 ہجری"],
+                answer: "2 ہجری"
+            },
+            {
+                question: "نصاب زکوٰۃ سونے پر کتنا ہے؟",
+                options: ["ساڑھے سات تولے", "باون تولے", "ایک تولہ", "دس تولے"],
+                answer: "ساڑھے سات تولے"
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let candidateName = '';
+        let userAnswers = new Array(quizData.length).fill(null);
+        let quizAttempted = false;
+
+        const loginScreen = document.getElementById('loginScreen');
+        const startScreen = document.getElementById('startScreen');
+        const quizScreen = document.getElementById('quizScreen');
+        const resultScreen = document.getElementById('resultScreen');
+
+        const quizIdInput = document.getElementById('quizId');
+        const quizPasswordInput = document.getElementById('quizPassword');
+        const loginButton = document.getElementById('loginButton');
+        const loginError = document.getElementById('loginError');
+
+        const startButton = document.getElementById('startButton');
+        const candidateNameInput = document.getElementById('candidateName');
+        const questionsContainer = document.getElementById('questionsContainer');
+        const prevButton = document.getElementById('prevButton');
+        const nextButton = document.getElementById('nextButton');
+        const submitButton = document.getElementById('submitButton');
+        const scoreSpan = document.getElementById('score');
+        const totalQuestionsSpan = document.getElementById('totalQuestions');
+        const finalCandidateNameSpan = document.getElementById('finalCandidateName');
+        const feedbackContainer = document.getElementById('feedbackContainer');
+
+        // Function to shuffle an array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Shuffle quiz data and options
+        shuffleArray(quizData);
+        quizData.forEach(q => shuffleArray(q.options));
+
+        loginButton.addEventListener('click', () => {
+            const enteredId = quizIdInput.value.trim();
+            const enteredPassword = quizPasswordInput.value.trim();
+
+            if (enteredId === 'Quiz1' && enteredPassword === '3June') {
+                loginScreen.classList.add('hidden');
+                startScreen.classList.remove('hidden');
+                loginError.classList.add('hidden'); // Hide any previous error
+            } else {
+                loginError.classList.remove('hidden');
+            }
+        });
+
+        startButton.addEventListener('click', () => {
+            candidateName = candidateNameInput.value.trim();
+            if (candidateName === '') {
+                // Using a simple alert for now, can be replaced with a custom modal for better UX
+                alert('Please enter your name to start the quiz.');
+                return;
+            }
+            startScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            loadQuestion();
+        });
+
+        function loadQuestion() {
+            questionsContainer.innerHTML = ''; // Clear previous question
+            const q = quizData[currentQuestionIndex];
+            const questionCard = document.createElement('div');
+            questionCard.className = 'question-card';
+            questionCard.innerHTML = `
+                <p class="text-lg font-semibold mb-4">${currentQuestionIndex + 1}. ${q.question}</p>
+                <div class="options-group" data-question-index="${currentQuestionIndex}">
+                    ${q.options.map((option, idx) => `
+                        <label class="option-label">
+                            <input type="radio" name="question${currentQuestionIndex}" value="${option}" ${userAnswers[currentQuestionIndex] === option ? 'checked' : ''}>
+                            ${option}
+                        </label>
+                    `).join('')}
+                </div>
+            `;
+            questionsContainer.appendChild(questionCard);
+
+            // Add event listeners for option selection
+            const optionsGroup = questionCard.querySelector('.options-group');
+            optionsGroup.addEventListener('change', (event) => {
+                if (event.target.type === 'radio') {
+                    userAnswers[currentQuestionIndex] = event.target.value;
+                    // Update selected class
+                    optionsGroup.querySelectorAll('.option-label').forEach(label => {
+                        label.classList.remove('selected');
+                    });
+                    event.target.closest('.option-label').classList.add('selected');
+                }
+            });
+
+            // Update button visibility
+            prevButton.classList.toggle('hidden', currentQuestionIndex === 0);
+            nextButton.classList.toggle('hidden', currentQuestionIndex === quizData.length - 1);
+            submitButton.classList.toggle('hidden', currentQuestionIndex !== quizData.length - 1);
+
+            // Apply selected class on load if an answer is already chosen
+            if (userAnswers[currentQuestionIndex]) {
+                const selectedOptionLabel = optionsGroup.querySelector(`input[value="${userAnswers[currentQuestionIndex]}"]`).closest('.option-label');
+                if (selectedOptionLabel) {
+                    selectedOptionLabel.classList.add('selected');
+                }
+            }
+        }
+
+        prevButton.addEventListener('click', () => {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        });
+
+        nextButton.addEventListener('click', () => {
+            if (currentQuestionIndex < quizData.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        });
+
+        submitButton.addEventListener('click', () => {
+            if (quizAttempted) return; // Prevent restart
+
+            score = 0;
+            feedbackContainer.innerHTML = '';
+
+            quizData.forEach((q, index) => {
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer === q.answer;
+
+                if (isCorrect) {
+                    score++;
+                }
+
+                // Add feedback for each question
+                const feedbackItem = document.createElement('div');
+                feedbackItem.className = `mb-4 p-3 rounded-lg ${isCorrect ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`;
+                feedbackItem.innerHTML = `
+                    <p class="font-semibold">${index + 1}. ${q.question}</p>
+                    <p>Your Answer: <span class="${isCorrect ? 'font-medium' : 'font-medium line-through'}">${userAnswer || 'Not answered'}</span></p>
+                    <p>Correct Answer: <span class="font-medium">${q.answer}</span></p>
+                `;
+                feedbackContainer.appendChild(feedbackItem);
+            });
+
+            quizScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+            finalCandidateNameSpan.textContent = candidateName;
+            scoreSpan.textContent = score;
+            totalQuestionsSpan.textContent = quizData.length;
+            quizAttempted = true; // Mark quiz as attempted
+        });
+
+    </script>
+</body>
+</html>
